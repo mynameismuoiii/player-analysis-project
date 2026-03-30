@@ -1,0 +1,13 @@
+pandas
+flask
+requests
+tabulate
+beautifulsoup4
+selenium
+selenium-stealth
+webdriver-manager
+thefuzz
+python-Levenshtein
+scikit-learn
+matplotlib
+numpy
