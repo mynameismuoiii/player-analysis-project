@@ -1,6 +1,12 @@
+venv/
 .venv/
 __pycache__/
 *.pyc
+.env
+
 data/player_analysis.db
-logs/
-outputs/
+data/raw/*
+data/processed/*
+
+!data/raw/.gitkeep
+!data/processed/.gitkeep
