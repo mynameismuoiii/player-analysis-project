@@ -21,6 +21,8 @@ from crawlers.fbref.cleaning import (
     clean_nan,
 )
 
+CSV_OUTPUT_PATH = "data/processed/fbref_player_stats.csv"
+
 
 def save_to_sqlite(df):
     Path("data").mkdir(exist_ok=True)
@@ -35,6 +37,16 @@ def save_to_sqlite(df):
     )
 
     conn.close()
+
+
+def save_to_csv(df):
+    Path("data/processed").mkdir(parents=True, exist_ok=True)
+
+    df.to_csv(
+        CSV_OUTPUT_PATH,
+        index=False,
+        encoding="utf-8-sig",
+    )
 
 
 def main():
@@ -72,12 +84,15 @@ def main():
     print(f"Số cầu thủ sau khi lọc > {MIN_MINUTES} phút: {len(df)}")
 
     print("Đang lưu SQLite...")
-
     save_to_sqlite(df)
 
+    print("Đang export CSV...")
+    save_to_csv(df)
+
     print("DONE")
-    print(f"Đã lưu vào database: {DB_PATH}")
-    print(f"Tên bảng: {TABLE_NAME}")
+    print(f"Database: {DB_PATH}")
+    print(f"Bảng SQLite: {TABLE_NAME}")
+    print(f"CSV: {CSV_OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
