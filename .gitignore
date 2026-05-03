@@ -1,17 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environment
 venv/
 .venv/
-__pycache__/
-*.pyc
-.env
+env/
 
-data/player_analysis.db
-data/raw/*
-data/processed/*
-
-!data/raw/.gitkeep
-!data/processed/.gitkeep
-
-*.log
-.DS_Store
+# IDE
 .vscode/
 .idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database generated after running
+data/*.db
+*.sqlite
+*.sqlite3
+
+# Cache / raw downloaded pages
+# Giữ lại HTML cache nếu muốn thầy chạy được offline thì bỏ comment dòng dưới
+# data/raw/*.html
+
+# Processed output files
+data/processed/*.csv
+outputs/
+reports/output/
+
+# Jupyter
+.ipynb_checkpoints/

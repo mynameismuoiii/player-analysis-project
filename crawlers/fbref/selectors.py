@@ -1,11 +1,9 @@
-SOCCERDATA_LEAGUE = "ENG-Premier League"
-SOCCERDATA_SEASON = "2024-2025"
+TABLE_ID = "stats_standard"
 
-FBREF_STAT_TYPES = {
-    "standard": "standard",
-    "shooting": "shooting",
-    "playing_time": "playing_time",
-    "misc": "misc",
-}
+MIN_MINUTES = 90
 
-MERGE_KEYS = ["player", "team"]
+DB_PATH = "data/player_analysis.db"
+
+TABLE_NAME = "fbref_player_stats"
+
+HTML_CACHE_PATH = "data/raw/fbref_player_stats.html"

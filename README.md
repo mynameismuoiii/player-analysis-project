@@ -11,7 +11,7 @@ Bao gồm:
 - Lưu dữ liệu vào SQLite
 - Xây dựng Flask REST API tra cứu cầu thủ
 - Xây dựng CLI dùng requests để gọi API
-- Phân tích dữ liệu và clustering (K-means, PCA)
+- Phân tích dữ liệu và clustering: K-means, PCA
 
 ---
 
@@ -34,17 +34,21 @@ player-analysis-project/
 │
 ├── data/
 │   ├── raw/
+│   │   └── fbref_player_stats.html
 │   ├── processed/
 │   └── player_analysis.db
 │
 ├── database/
+│   ├── __init__.py
 │   ├── schema.sql
 │   ├── init_db.py
 │   ├── db.py
 │   └── helpers.py
 │
 ├── crawlers/
+│   ├── __init__.py
 │   ├── fbref/
+│   │   ├── __init__.py
 │   │   ├── crawl_fbref.py
 │   │   ├── parser.py
 │   │   ├── selectors.py
@@ -95,13 +99,18 @@ python -m venv venv
 
 ## 3. Cài thư viện
 
-### PowerShell (khuyên dùng)
-
-Do PowerShell có thể chặn activate script nên cài trực tiếp bằng Python trong venv:
+### PowerShell
 
 ```bash
 .\venv\Scripts\python.exe -m pip install --upgrade pip
 .\venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Nếu muốn activate venv:
+
+```bash
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.\venv\Scripts\Activate.ps1
 ```
 
 ### CMD
@@ -116,7 +125,7 @@ pip install -r requirements.txt
 ## 4. Kiểm tra cài đặt
 
 ```bash
-.\venv\Scripts\python.exe -c "import pandas, requests, bs4, flask, soccerdata; print('OK')"
+.\venv\Scripts\python.exe -c "import pandas, requests, bs4, flask; print('OK')"
 ```
 
 Nếu hiện:
@@ -125,7 +134,7 @@ Nếu hiện:
 OK
 ```
 
-thì cài đặt thành công.
+là cài đặt thành công.
 
 ---
 
@@ -145,17 +154,69 @@ Database initialized successfully.
 
 ---
 
-## Bước 2: Crawl dữ liệu FBref
+## Bước 2: Chuẩn bị HTML cache FBref
+
+Do FBref có cơ chế Cloudflare/rate-limit, nhóm lưu HTML của trang FBref về local cache rồi parse bằng Python.
+
+Mở link:
+
+```txt
+https://fbref.com/en/comps/9/2024-2025/stats/players/2024-2025-Premier-League-Stats
+```
+
+Trang đúng phải có tiêu đề:
+
+```txt
+Player Standard Stats 2024-2025 Premier League
+```
+
+Khi bảng cầu thủ đã hiện đầy đủ, bấm:
+
+```txt
+Ctrl + S
+```
+
+Lưu file vào:
+
+```txt
+data/raw/fbref_player_stats.html
+```
+
+Lưu ý: nên bật hiển thị đuôi file trong File Explorer:
+
+```txt
+View -> Show -> File name extensions
+```
+
+để chắc chắn file có tên đúng là:
+
+```txt
+fbref_player_stats.html
+```
+
+---
+
+## Bước 3: Crawl dữ liệu FBref
 
 ```bash
 .\venv\Scripts\python.exe -m crawlers.fbref.crawl_fbref
 ```
 
-Sau khi chạy xong sẽ tạo:
+Kết quả mong muốn:
+
+```txt
+Đang đọc HTML cache local...
+Đang parse bảng FBref...
+Đang cleaning dữ liệu...
+Số cầu thủ sau khi lọc > 90 phút: ...
+Đang lưu SQLite...
+DONE
+```
+
+Sau khi chạy xong sẽ tạo database:
 
 ```txt
 data/player_analysis.db
-data/processed/fbref_player_stats.csv
 ```
 
 và bảng SQLite:
@@ -166,17 +227,17 @@ fbref_player_stats
 
 ---
 
-## Bước 3: Kiểm tra dữ liệu FBref
+## Bước 4: Kiểm tra dữ liệu FBref
 
 ```bash
-.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT COUNT(*) FROM fbref_player_stats').fetchone()); print(conn.execute('SELECT player, team FROM fbref_player_stats LIMIT 5').fetchall()); conn.close()"
+.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT COUNT(*) FROM fbref_player_stats').fetchone()); print(conn.execute('SELECT player, squad FROM fbref_player_stats LIMIT 5').fetchall()); conn.close()"
 ```
 
 Nếu hiện số dòng và danh sách cầu thủ là dữ liệu FBref đã lưu thành công.
 
 ---
 
-## Bước 4: Crawl giá chuyển nhượng FootballTransfers
+## Bước 5: Crawl giá chuyển nhượng FootballTransfers
 
 ```bash
 .\venv\Scripts\python.exe -m crawlers.footballtransfers.crawl_values
@@ -190,7 +251,7 @@ player_values
 
 ---
 
-## Bước 5: Kiểm tra dữ liệu giá chuyển nhượng
+## Bước 6: Kiểm tra dữ liệu giá chuyển nhượng
 
 ```bash
 .\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT COUNT(*) FROM player_values').fetchone()); print(conn.execute('SELECT player, team, market_value_text FROM player_values LIMIT 5').fetchall()); conn.close()"
@@ -253,11 +314,7 @@ Mở terminal thứ hai.
 Kết quả sẽ:
 
 - In dữ liệu ra màn hình
-- Xuất CSV vào thư mục:
-
-```txt
-data/processed/
-```
+- Xuất CSV vào thư mục `data/processed/`
 
 Ví dụ:
 
@@ -278,15 +335,17 @@ Nếu muốn test lại toàn bộ project:
 del data\player_analysis.db
 ```
 
-## Chạy lại toàn bộ
+## Chạy lại
 
 ```bash
 .\venv\Scripts\python.exe -m database.init_db
-
 .\venv\Scripts\python.exe -m crawlers.fbref.crawl_fbref
-
 .\venv\Scripts\python.exe -m crawlers.footballtransfers.crawl_values
+```
 
+Sau đó chạy API:
+
+```bash
 .\venv\Scripts\python.exe -m api.app
 ```
 
@@ -314,4 +373,32 @@ Ví dụ chạy:
 .\venv\Scripts\python.exe -m analysis.stats_summary
 ```
 
+Kết quả phân tích sẽ được lưu vào:
 
+```txt
+data/processed/
+```
+
+---
+
+# 🧪 Một số lệnh kiểm tra nhanh
+
+## Kiểm tra các bảng trong SQLite
+
+```bash
+.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()); conn.close()"
+```
+
+## Xem 5 cầu thủ đầu tiên
+
+```bash
+.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT player, squad FROM fbref_player_stats LIMIT 5').fetchall()); conn.close()"
+```
+
+## Đếm số cầu thủ theo câu lạc bộ
+
+```bash
+.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT squad, COUNT(*) FROM fbref_player_stats GROUP BY squad LIMIT 10').fetchall()); conn.close()"
+```
+
+---

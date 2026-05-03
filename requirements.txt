@@ -1,7 +1,11 @@
 pandas
-requests
 beautifulsoup4
-flask
 lxml
-soccerdata
+requests
+selenium
+webdriver-manager
+flask
 tabulate
+numpy
+scikit-learn
+matplotlib
