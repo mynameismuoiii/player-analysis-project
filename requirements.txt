@@ -1,11 +1,7 @@
+flask
 pandas
+requests
 beautifulsoup4
 lxml
-requests
 selenium
 webdriver-manager
-flask
-tabulate
-numpy
-scikit-learn
-matplotlib

@@ -1,42 +1,43 @@
-# Python
+# Python cache
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-*.egg-info/
-.eggs/
-dist/
-build/
+*$py.class
 
 # Virtual environment
-venv/
 .venv/
+venv/
 env/
 
 # IDE
 .vscode/
 .idea/
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
-# Database generated after running
-data/*.db
+# SQLite database
+*.db
 *.sqlite
 *.sqlite3
+data/player_analysis.db
 
-# Cache / raw downloaded pages
-# Giữ lại HTML cache nếu muốn thầy chạy được offline thì bỏ comment dòng dưới
-# data/raw/*.html
-
-# Processed output files
+# Raw / processed data
+data/raw/*.html
 data/processed/*.csv
-outputs/
-reports/output/
+
+# Logs
+*.log
+logs/
+
+# Selenium / webdriver cache
+.wdm/
+.seleniumbase/
+downloaded_files/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.*

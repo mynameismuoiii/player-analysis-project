@@ -1,30 +1,65 @@
 import re
+import unicodedata
 
 
-def build_search_url(player_name: str) -> str:
-    query = str(player_name).strip().replace(" ", "%20")
-    return f"https://www.footballtransfers.com/en/search?q={query}"
+def normalize_text(text: str) -> str:
+    """
+    Chuẩn hóa text để so khớp tên cầu thủ:
+    - viết thường
+    - bỏ dấu
+    - bỏ ký tự đặc biệt
+    - xóa khoảng trắng thừa
+    """
+    if text is None:
+        return ""
+
+    text = str(text).lower().strip()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
 
 
-def market_value_to_number(value):
-    if value is None:
+def parse_market_value(value_text: str):
+    """
+    Chuyển giá trị:
+    €50M -> 50000000
+    €750K -> 750000
+    €1.2B -> 1200000000
+    """
+    if not value_text or value_text == "N/a":
         return None
 
-    value = str(value).replace("€", "").replace(",", "").replace(" ", "").strip()
-
-    if value in ["", "-", "N/a", "N/A"]:
-        return None
-
-    multiplier = 1
-
-    if value.lower().endswith("m"):
-        multiplier = 1_000_000
-        value = value[:-1]
-    elif value.lower().endswith("k"):
-        multiplier = 1_000
-        value = value[:-1]
+    text = str(value_text)
+    text = text.replace("€", "").replace(",", "").replace(" ", "").strip().upper()
 
     try:
-        return float(value) * multiplier
-    except Exception:
+        if text.endswith("M"):
+            return float(text[:-1]) * 1_000_000
+        if text.endswith("K"):
+            return float(text[:-1]) * 1_000
+        if text.endswith("B"):
+            return float(text[:-1]) * 1_000_000_000
+
+        return float(text)
+
+    except ValueError:
         return None
+
+
+def extract_market_value(text: str):
+    """
+    Tìm giá dạng €50M / €750K / €1.2M trong text.
+    """
+    if not text:
+        return None
+
+    pattern = re.compile(r"€\s?\d+(?:\.\d+)?\s?[KMB]", re.IGNORECASE)
+    match = pattern.search(str(text))
+
+    if match:
+        return match.group(0).replace(" ", "")
+
+    return None

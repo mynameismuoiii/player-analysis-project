@@ -1,23 +1,26 @@
-import os
-import sqlite3
+from pathlib import Path
 
-DB_PATH = os.path.join("data", "player_analysis.db")
-SCHEMA_PATH = os.path.join("database", "schema.sql")
+from database.db import get_connection
 
 
-def init_db():
-    os.makedirs("data", exist_ok=True)
+SCHEMA_PATH = "database/schema.sql"
 
-    conn = sqlite3.connect(DB_PATH)
 
-    with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
-        conn.executescript(f.read())
+def init_database():
+    Path("data").mkdir(parents=True, exist_ok=True)
 
+    conn = get_connection()
+
+    with open(SCHEMA_PATH, "r", encoding="utf-8") as file:
+        schema = file.read()
+
+    conn.executescript(schema)
     conn.commit()
     conn.close()
 
-    print("Database initialized successfully.")
+    print("DONE: Đã khởi tạo database")
+    print("Database: data/player_analysis.db")
 
 
 if __name__ == "__main__":
-    init_db()
+    init_database()

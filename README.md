@@ -1,30 +1,32 @@
-# Player Analysis Project (EPL 2024-2025)
+# Player Analysis Project - EPL 2024/2025
 
-## 📌 Mô tả
+## 📌 Giới thiệu
 
-Project này thu thập, xử lý và phân tích dữ liệu cầu thủ giải Ngoại hạng Anh mùa 2024–2025.
+Project thu thập, xử lý và tra cứu dữ liệu cầu thủ giải Ngoại hạng Anh mùa 2024/2025.
 
-Bao gồm:
+Project bao gồm:
 
 - Crawl dữ liệu thống kê cầu thủ từ FBref
-- Crawl giá chuyển nhượng từ FootballTransfers
+- Crawl giá trị chuyển nhượng từ FootballTransfers
 - Lưu dữ liệu vào SQLite
-- Xây dựng Flask REST API tra cứu cầu thủ
-- Xây dựng CLI dùng requests để gọi API
-- Phân tích dữ liệu và clustering: K-means, PCA
+- Xây dựng Flask REST API
+- Xây dựng CLI dùng `requests`
+- Export dữ liệu ra CSV để phân tích
 
 ---
 
-## 🧑‍🤝‍🧑 Thành viên
+# 👥 Thành viên
 
-- Trang: Database + Model dữ liệu
-- Hương: FBref crawler
-- Thảo: FootballTransfers crawler
-- Ngọc: API + CLI + Analysis
+| Thành viên | Công việc |
+|---|---|
+| Trang | Database + SQLite |
+| Hương | FBref crawler |
+| Thảo | FootballTransfers crawler |
+| Ngọc | API + CLI + Analysis |
 
 ---
 
-## 📁 Cấu trúc project
+# 📁 Cấu trúc project
 
 ```txt
 player-analysis-project/
@@ -47,6 +49,7 @@ player-analysis-project/
 │
 ├── crawlers/
 │   ├── __init__.py
+│   │
 │   ├── fbref/
 │   │   ├── __init__.py
 │   │   ├── crawl_fbref.py
@@ -55,30 +58,36 @@ player-analysis-project/
 │   │   └── cleaning.py
 │   │
 │   └── footballtransfers/
+│       ├── __init__.py
 │       ├── crawl_values.py
 │       ├── matcher.py
 │       ├── retry.py
 │       └── helpers.py
 │
 ├── api/
+│   ├── __init__.py
 │   ├── app.py
 │   ├── routes.py
 │   └── services.py
 │
 ├── cli/
+│   ├── __init__.py
 │   └── lookup.py
 │
 └── analysis/
-    ├── stats_summary.py
-    ├── valuation.py
-    ├── kmeans_cluster.py
-    ├── pca_visualization.py
-    └── plot_utils.py
 ```
 
 ---
 
-# ⚙️ Cài đặt
+# ⚙️ Yêu cầu hệ thống
+
+- Python 3.10+
+- Google Chrome
+- Windows PowerShell hoặc CMD
+
+---
+
+# 📦 Cài đặt project
 
 ## 1. Clone project
 
@@ -89,43 +98,108 @@ cd player-analysis-project
 
 ---
 
-## 2. Tạo môi trường ảo
+# 🐍 Tạo môi trường ảo
+
+## PowerShell
 
 ```bash
 python -m venv venv
 ```
 
----
-
-## 3. Cài thư viện
-
-### PowerShell
-
-```bash
-.\venv\Scripts\python.exe -m pip install --upgrade pip
-.\venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-Nếu muốn activate venv:
+Kích hoạt:
 
 ```bash
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 .\venv\Scripts\Activate.ps1
 ```
 
-### CMD
+---
+
+## CMD
 
 ```cmd
+python -m venv venv
 venv\Scripts\activate.bat
-pip install -r requirements.txt
 ```
 
 ---
 
-## 4. Kiểm tra cài đặt
+# 📥 Cài thư viện
 
 ```bash
-.\venv\Scripts\python.exe -c "import pandas, requests, bs4, flask; print('OK')"
+pip install -r requirements.txt
+```
+
+Hoặc:
+
+```bash
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+---
+
+# 📄 requirements.txt
+
+```txt
+flask
+pandas
+requests
+beautifulsoup4
+lxml
+selenium
+webdriver-manager
+```
+
+---
+
+# 🚫 .gitignore
+
+```gitignore
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Data
+data/raw/*.html
+data/processed/*.csv
+data/player_analysis.db
+
+# Logs
+*.log
+logs/
+
+# Selenium
+.wdm/
+.seleniumbase/
+
+# Environment
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+```
+
+---
+
+# ✅ Kiểm tra cài đặt
+
+```bash
+python -c "import flask, pandas, requests, bs4, selenium; print('OK')"
 ```
 
 Nếu hiện:
@@ -138,12 +212,12 @@ là cài đặt thành công.
 
 ---
 
-# ▶️ Chạy project từ đầu
+# 🗄️ Khởi tạo database
 
-## Bước 1: Khởi tạo database
+Chạy:
 
 ```bash
-.\venv\Scripts\python.exe -m database.init_db
+python -m database.init_db
 ```
 
 Kết quả mong muốn:
@@ -152,11 +226,17 @@ Kết quả mong muốn:
 Database initialized successfully.
 ```
 
+Database sẽ được tạo tại:
+
+```txt
+data/player_analysis.db
+```
+
 ---
 
-## Bước 2: Chuẩn bị HTML cache FBref
+# 🌐 Crawl dữ liệu FBref
 
-Do FBref có cơ chế Cloudflare/rate-limit, nhóm lưu HTML của trang FBref về local cache rồi parse bằng Python.
+## Bước 1: Tải HTML FBref
 
 Mở link:
 
@@ -164,13 +244,13 @@ Mở link:
 https://fbref.com/en/comps/9/2024-2025/stats/players/2024-2025-Premier-League-Stats
 ```
 
-Trang đúng phải có tiêu đề:
+Trang đúng phải là:
 
 ```txt
 Player Standard Stats 2024-2025 Premier League
 ```
 
-Khi bảng cầu thủ đã hiện đầy đủ, bấm:
+Sau khi bảng hiện đầy đủ:
 
 ```txt
 Ctrl + S
@@ -182,24 +262,34 @@ Lưu file vào:
 data/raw/fbref_player_stats.html
 ```
 
-Lưu ý: nên bật hiển thị đuôi file trong File Explorer:
+---
+
+## ⚠️ Lưu ý quan trọng
+
+Cần bật hiển thị đuôi file trong Windows:
 
 ```txt
 View -> Show -> File name extensions
 ```
 
-để chắc chắn file có tên đúng là:
+Đảm bảo file đúng tên:
 
 ```txt
 fbref_player_stats.html
 ```
 
+Không được là:
+
+```txt
+fbref_player_stats.html.html
+```
+
 ---
 
-## Bước 3: Crawl dữ liệu FBref
+# ▶️ Chạy crawler FBref
 
 ```bash
-.\venv\Scripts\python.exe -m crawlers.fbref.crawl_fbref
+python -m crawlers.fbref.crawl_fbref
 ```
 
 Kết quả mong muốn:
@@ -210,16 +300,18 @@ Kết quả mong muốn:
 Đang cleaning dữ liệu...
 Số cầu thủ sau khi lọc > 90 phút: ...
 Đang lưu SQLite...
+Đang export CSV...
 DONE
 ```
 
-Sau khi chạy xong sẽ tạo database:
+Sau khi chạy xong sẽ tạo:
 
 ```txt
 data/player_analysis.db
+data/processed/fbref_player_stats.csv
 ```
 
-và bảng SQLite:
+Bảng SQLite:
 
 ```txt
 fbref_player_stats
@@ -227,23 +319,36 @@ fbref_player_stats
 
 ---
 
-## Bước 4: Kiểm tra dữ liệu FBref
+# 🔍 Kiểm tra dữ liệu FBref
 
 ```bash
-.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT COUNT(*) FROM fbref_player_stats').fetchone()); print(conn.execute('SELECT player, squad FROM fbref_player_stats LIMIT 5').fetchall()); conn.close()"
+python -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT COUNT(*) FROM fbref_player_stats').fetchone()); print(conn.execute('SELECT player, squad FROM fbref_player_stats LIMIT 5').fetchall()); conn.close()"
 ```
-
-Nếu hiện số dòng và danh sách cầu thủ là dữ liệu FBref đã lưu thành công.
 
 ---
 
-## Bước 5: Crawl giá chuyển nhượng FootballTransfers
+# 💰 Crawl giá chuyển nhượng FootballTransfers
+
+Sau khi đã có bảng `fbref_player_stats`, chạy:
 
 ```bash
-.\venv\Scripts\python.exe -m crawlers.footballtransfers.crawl_values
+python -m crawlers.footballtransfers.crawl_values
 ```
 
-Sau khi chạy xong sẽ tạo bảng:
+Crawler sẽ:
+
+- Đọc danh sách cầu thủ từ SQLite
+- Tìm giá trị chuyển nhượng trên FootballTransfers
+- Lưu dữ liệu vào SQLite
+- Export CSV
+
+Kết quả sau khi chạy:
+
+```txt
+data/processed/player_values.csv
+```
+
+Bảng SQLite:
 
 ```txt
 player_values
@@ -251,22 +356,18 @@ player_values
 
 ---
 
-## Bước 6: Kiểm tra dữ liệu giá chuyển nhượng
+# 🔍 Kiểm tra dữ liệu FootballTransfers
 
 ```bash
-.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT COUNT(*) FROM player_values').fetchone()); print(conn.execute('SELECT player, team, market_value_text FROM player_values LIMIT 5').fetchall()); conn.close()"
+python -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT COUNT(*) FROM player_values').fetchone()); print(conn.execute('SELECT player, squad, market_value_text FROM player_values LIMIT 5').fetchall()); conn.close()"
 ```
-
-Nếu hiện dữ liệu là phần crawl giá đã chạy thành công.
 
 ---
 
 # 🌐 Chạy Flask API
 
-Mở terminal mới và chạy:
-
 ```bash
-.\venv\Scripts\python.exe -m api.app
+python -m api.app
 ```
 
 Kết quả mong muốn:
@@ -275,19 +376,29 @@ Kết quả mong muốn:
 Running on http://127.0.0.1:5000
 ```
 
-Giữ terminal này chạy.
+Giữ terminal này chạy để API hoạt động.
 
 ---
 
-# 🔎 Test API bằng trình duyệt
+# 🔎 Test API
 
-Tra cứu theo tên cầu thủ:
+## Home
+
+```txt
+http://127.0.0.1:5000/
+```
+
+---
+
+## Tra cứu theo tên cầu thủ
 
 ```txt
 http://127.0.0.1:5000/api/player?name=Saka
 ```
 
-Tra cứu theo câu lạc bộ:
+---
+
+## Tra cứu theo câu lạc bộ
 
 ```txt
 http://127.0.0.1:5000/api/club?club=Arsenal
@@ -297,24 +408,26 @@ http://127.0.0.1:5000/api/club?club=Arsenal
 
 # 💻 Chạy CLI
 
-Mở terminal thứ hai.
+Mở terminal khác trong khi API vẫn đang chạy.
 
-## Tra theo tên cầu thủ
-
-```bash
-.\venv\Scripts\python.exe -m cli.lookup --name Saka
-```
-
-## Tra theo câu lạc bộ
+## Tra cứu theo tên cầu thủ
 
 ```bash
-.\venv\Scripts\python.exe -m cli.lookup --club Arsenal
+python -m cli.lookup --name Saka
 ```
 
-Kết quả sẽ:
+---
 
-- In dữ liệu ra màn hình
-- Xuất CSV vào thư mục `data/processed/`
+## Tra cứu theo câu lạc bộ
+
+```bash
+python -m cli.lookup --club Arsenal
+```
+
+CLI sẽ:
+
+- In dữ liệu ra terminal
+- Xuất CSV vào `data/processed/`
 
 Ví dụ:
 
@@ -327,78 +440,60 @@ data/processed/club_arsenal.csv
 
 # 🔄 Chạy lại project từ đầu
 
-Nếu muốn test lại toàn bộ project:
-
 ## Xóa database cũ
 
 ```bash
 del data\player_analysis.db
 ```
 
-## Chạy lại
+---
+
+## Chạy lại toàn bộ project
 
 ```bash
-.\venv\Scripts\python.exe -m database.init_db
-.\venv\Scripts\python.exe -m crawlers.fbref.crawl_fbref
-.\venv\Scripts\python.exe -m crawlers.footballtransfers.crawl_values
-```
-
-Sau đó chạy API:
-
-```bash
-.\venv\Scripts\python.exe -m api.app
+python -m database.init_db
+python -m crawlers.fbref.crawl_fbref
+python -m crawlers.footballtransfers.crawl_values
+python -m api.app
 ```
 
 Mở terminal khác để test CLI:
 
 ```bash
-.\venv\Scripts\python.exe -m cli.lookup --club Arsenal
-```
-
----
-
-# 📊 Phân tích dữ liệu
-
-Thư mục `analysis/` chứa:
-
-- Thống kê mean / median / std theo đội
-- Định giá cầu thủ
-- K-means clustering
-- PCA visualization
-- Scatter plot 2D / 3D
-
-Ví dụ chạy:
-
-```bash
-.\venv\Scripts\python.exe -m analysis.stats_summary
-```
-
-Kết quả phân tích sẽ được lưu vào:
-
-```txt
-data/processed/
+python -m cli.lookup --club Arsenal
 ```
 
 ---
 
 # 🧪 Một số lệnh kiểm tra nhanh
 
-## Kiểm tra các bảng trong SQLite
+## Kiểm tra các bảng SQLite
 
 ```bash
-.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()); conn.close()"
+python -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute(\"SELECT name FROM sqlite_master WHERE type='table'\").fetchall()); conn.close()"
 ```
+
+---
 
 ## Xem 5 cầu thủ đầu tiên
 
 ```bash
-.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT player, squad FROM fbref_player_stats LIMIT 5').fetchall()); conn.close()"
-```
-
-## Đếm số cầu thủ theo câu lạc bộ
-
-```bash
-.\venv\Scripts\python.exe -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT squad, COUNT(*) FROM fbref_player_stats GROUP BY squad LIMIT 10').fetchall()); conn.close()"
+python -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT player, squad FROM fbref_player_stats LIMIT 5').fetchall()); conn.close()"
 ```
 
 ---
+
+## Đếm số cầu thủ theo CLB
+
+```bash
+python -c "import sqlite3; conn=sqlite3.connect('data/player_analysis.db'); print(conn.execute('SELECT squad, COUNT(*) FROM fbref_player_stats GROUP BY squad LIMIT 10').fetchall()); conn.close()"
+```
+
+---
+
+# 📌 Ghi chú
+
+- Cần chạy `database.init_db` trước khi crawl dữ liệu.
+- Cần có file `data/raw/fbref_player_stats.html` trước khi chạy FBref crawler.
+- Cần chạy FBref crawler trước FootballTransfers crawler.
+- Cần bật Flask API trước khi chạy CLI.

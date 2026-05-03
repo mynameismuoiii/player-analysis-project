@@ -25,14 +25,11 @@ def get_player():
     if not name:
         return jsonify({"error": "Missing parameter: name"}), 400
 
-    data = search_player_by_name(name)
-
-    return jsonify(
-        {
-            "total": len(data),
-            "data": data,
-        }
-    )
+    try:
+        data = search_player_by_name(name)
+        return jsonify({"total": len(data), "data": data})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @api_bp.route("/api/club")
@@ -42,11 +39,8 @@ def get_club():
     if not club:
         return jsonify({"error": "Missing parameter: club"}), 400
 
-    data = search_players_by_club(club)
-
-    return jsonify(
-        {
-            "total": len(data),
-            "data": data,
-        }
-    )
+    try:
+        data = search_players_by_club(club)
+        return jsonify({"total": len(data), "data": data})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

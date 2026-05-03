@@ -1,156 +1,273 @@
-import os
-import re
 import time
 import sqlite3
+from pathlib import Path
+from urllib.parse import quote_plus
+
+import pandas as pd
 from bs4 import BeautifulSoup
 
-from crawlers.footballtransfers.helpers import build_search_url, market_value_to_number
-from crawlers.footballtransfers.retry import get_with_retry
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
-DB_PATH = os.path.join("data", "player_analysis.db")
+from crawlers.footballtransfers.helpers import (
+    normalize_text,
+    parse_market_value,
+)
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0"
-}
+from crawlers.footballtransfers.matcher import (
+    find_from_top_table,
+    find_value_from_page_text,
+)
 
 
-def create_player_values_table():
-    conn = sqlite3.connect(DB_PATH)
+DB_PATH = "data/player_analysis.db"
 
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS player_values (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            player TEXT NOT NULL,
-            team TEXT,
-            matched_name TEXT DEFAULT 'N/a',
-            market_value_text TEXT DEFAULT 'N/a',
-            market_value_eur REAL,
-            source TEXT DEFAULT 'footballtransfers',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-        """
+FBREF_TABLE = "fbref_player_stats"
+VALUES_TABLE = "player_values"
+
+CSV_OUTPUT_PATH = "data/processed/player_values.csv"
+
+TOP_VALUES_URL = "https://www.footballtransfers.com/us/values/players/most-valuable-soccer-players"
+SEARCH_URL = "https://www.footballtransfers.com/en/search?search_value="
+
+
+def create_driver():
+    options = Options()
+    options.add_argument("--start-maximized")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=options,
     )
 
-    conn.commit()
-    conn.close()
+    return driver
 
 
-def get_players_from_fbref():
+def read_players_from_db():
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
 
-    rows = conn.execute(
-        """
-        SELECT DISTINCT player, team
-        FROM fbref_player_stats
+    query = f"""
+        SELECT DISTINCT player, squad
+        FROM {FBREF_TABLE}
         WHERE player IS NOT NULL
-        ORDER BY team, player
-        """
-    ).fetchall()
+          AND player != 'N/a'
+          AND player != 'Player'
+          AND player != 'Squad Total'
+        ORDER BY squad, player
+    """
+
+    df = pd.read_sql_query(query, conn)
 
     conn.close()
 
-    return [dict(row) for row in rows]
+    return df
 
 
-def extract_market_value(html):
+def crawl_top_values_table(driver):
+    print("Đang crawl bảng top FootballTransfers...")
+
+    driver.get(TOP_VALUES_URL)
+
+    wait = WebDriverWait(driver, 30)
+    wait.until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "table.mvp-table"))
+    )
+
+    html = driver.page_source
     soup = BeautifulSoup(html, "html.parser")
-    text = soup.get_text(" ", strip=True)
 
-    matches = re.findall(r"€\s?\d+(?:\.\d+)?\s?[mMkK]", text)
+    table = soup.find("table", class_="mvp-table")
 
-    if not matches:
-        return "N/a"
+    if table is None:
+        print("Không tìm thấy bảng top FootballTransfers.")
+        return {}
 
-    return matches[0].replace(" ", "")
+    top_data = {}
+
+    rows = table.find_all("tr")
+
+    for row in rows:
+        cols = row.find_all("td")
+
+        if len(cols) < 3:
+            continue
+
+        name_tag = cols[2].find("a")
+
+        if not name_tag:
+            continue
+
+        player_name = name_tag.text.strip()
+        market_value_text = cols[-1].text.strip()
+
+        if not market_value_text:
+            market_value_text = "N/a"
+
+        key = normalize_text(player_name)
+
+        top_data[key] = {
+            "matched_name": player_name,
+            "market_value_text": market_value_text,
+            "market_value_eur": parse_market_value(market_value_text),
+            "source_url": TOP_VALUES_URL,
+            "status": "TOP_TABLE",
+        }
+
+    print(f"Crawl được {len(top_data)} cầu thủ từ bảng top.")
+
+    return top_data
 
 
-def crawl_value_for_player(player_name):
-    url = build_search_url(player_name)
+def crawl_one_player_by_search(driver, player_name: str):
+    search_url = SEARCH_URL + quote_plus(player_name)
 
-    response = get_with_retry(
-        url,
-        headers=HEADERS,
-        retries=3,
-        sleep_seconds=3,
-        timeout=20,
+    driver.get(search_url)
+
+    wait = WebDriverWait(driver, 20)
+    wait.until(
+        EC.presence_of_element_located((By.TAG_NAME, "body"))
     )
 
-    if response is None:
-        return "N/a"
+    time.sleep(1.5)
 
-    return extract_market_value(response.text)
+    page_text = driver.find_element(By.TAG_NAME, "body").text
+
+    result = find_value_from_page_text(page_text, player_name)
+
+    if not result:
+        return {
+            "matched_name": "N/a",
+            "market_value_text": "N/a",
+            "market_value_eur": None,
+            "source_url": search_url,
+            "status": "NOT_FOUND",
+        }
+
+    market_value_text = result["market_value_text"]
+
+    return {
+        "matched_name": result["matched_name"],
+        "market_value_text": market_value_text,
+        "market_value_eur": parse_market_value(market_value_text),
+        "source_url": search_url,
+        "status": "FOUND_SEARCH",
+    }
 
 
-def clear_old_values():
+def crawl_one_player(driver, player_name: str, top_data):
+    result = find_from_top_table(player_name, top_data)
+
+    if result is not None:
+        return result
+
+    return crawl_one_player_by_search(driver, player_name)
+
+
+def save_to_sqlite(df):
     conn = sqlite3.connect(DB_PATH)
-    conn.execute("DELETE FROM player_values")
-    conn.commit()
+
+    df.to_sql(
+        VALUES_TABLE,
+        conn,
+        if_exists="replace",
+        index=False,
+    )
+
     conn.close()
 
 
-def save_player_value(player, team, market_value_text):
-    conn = sqlite3.connect(DB_PATH)
+def save_to_csv(df):
+    Path("data/processed").mkdir(parents=True, exist_ok=True)
 
-    conn.execute(
-        """
-        INSERT INTO player_values (
-            player,
-            team,
-            matched_name,
-            market_value_text,
-            market_value_eur,
-            source
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-        """,
-        (
-            player,
-            team,
-            player,
-            market_value_text,
-            market_value_to_number(market_value_text),
-            "footballtransfers",
-        ),
+    df.to_csv(
+        CSV_OUTPUT_PATH,
+        index=False,
+        encoding="utf-8-sig",
     )
 
-    conn.commit()
-    conn.close()
 
+def main():
+    print("Đang đọc danh sách cầu thủ từ SQLite...")
 
-def crawl_all_values():
-    create_player_values_table()
+    players_df = read_players_from_db()
 
-    players = get_players_from_fbref()
-
-    if not players:
-        print("Chưa có bảng fbref_player_stats hoặc bảng đang rỗng.")
-        print("Chạy trước: python -m crawlers.fbref.crawl_fbref")
+    if players_df.empty:
+        print("Không có dữ liệu cầu thủ.")
+        print("Hãy chạy phần I.1 trước.")
         return
 
-    clear_old_values()
+    print(f"Số cầu thủ cần crawl giá: {len(players_df)}")
 
-    print(f"Tìm thấy {len(players)} cầu thủ từ fbref_player_stats.")
+    driver = create_driver()
 
-    for index, row in enumerate(players, start=1):
-        player = row["player"]
-        team = row["team"]
+    results = []
 
-        print(f"[{index}/{len(players)}] Crawl giá: {player} - {team}")
+    try:
+        top_data = crawl_top_values_table(driver)
 
-        market_value_text = crawl_value_for_player(player)
+        for index, row in players_df.iterrows():
+            player = row["player"]
+            squad = row["squad"]
 
-        save_player_value(
-            player=player,
-            team=team,
-            market_value_text=market_value_text,
-        )
+            print(f"[{index + 1}/{len(players_df)}] Đang crawl: {player} - {squad}")
 
-        time.sleep(2)
+            try:
+                value_data = crawl_one_player(
+                    driver=driver,
+                    player_name=player,
+                    top_data=top_data,
+                )
 
-    print("Hoàn thành crawl giá chuyển nhượng.")
+                results.append({
+                    "player": player,
+                    "squad": squad,
+                    "matched_name": value_data["matched_name"],
+                    "market_value_text": value_data["market_value_text"],
+                    "market_value_eur": value_data["market_value_eur"],
+                    "source_url": value_data["source_url"],
+                    "status": value_data["status"],
+                })
+
+                print(f"  -> {value_data['status']}: {value_data['market_value_text']}")
+
+            except Exception as e:
+                search_url = SEARCH_URL + quote_plus(player)
+
+                results.append({
+                    "player": player,
+                    "squad": squad,
+                    "matched_name": "N/a",
+                    "market_value_text": "N/a",
+                    "market_value_eur": None,
+                    "source_url": search_url,
+                    "status": f"ERROR: {str(e)}",
+                })
+
+                print(f"  -> ERROR: {e}")
+
+            time.sleep(1)
+
+    finally:
+        driver.quit()
+
+    result_df = pd.DataFrame(results)
+
+    print("Đang lưu bảng player_values vào SQLite...")
+    save_to_sqlite(result_df)
+
+    print("Đang export CSV...")
+    save_to_csv(result_df)
+
+    print("DONE")
+    print(f"SQLite table: {VALUES_TABLE}")
+    print(f"CSV: {CSV_OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
-    crawl_all_values()
+    main()

@@ -1,6 +1,6 @@
-import sqlite3
 from pathlib import Path
 
+from database.db import get_connection
 from crawlers.fbref.selectors import (
     TABLE_ID,
     MIN_MINUTES,
@@ -8,12 +8,10 @@ from crawlers.fbref.selectors import (
     TABLE_NAME,
     HTML_CACHE_PATH,
 )
-
 from crawlers.fbref.parser import (
     extract_table_html,
     parse_fbref_table,
 )
-
 from crawlers.fbref.cleaning import (
     clean_column_names,
     remove_repeated_headers,
@@ -25,9 +23,7 @@ CSV_OUTPUT_PATH = "data/processed/fbref_player_stats.csv"
 
 
 def save_to_sqlite(df):
-    Path("data").mkdir(exist_ok=True)
-
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
 
     df.to_sql(
         TABLE_NAME,

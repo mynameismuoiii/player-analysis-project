@@ -2,46 +2,27 @@ import re
 import unicodedata
 
 
-def clean_text(value):
+def normalize_text(text):
+    if text is None:
+        return ""
+
+    text = str(text).strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+
+    text = re.sub(r"[^a-z0-9\s]", "", text)
+    text = re.sub(r"\s+", " ", text)
+
+    return text
+
+
+def safe_value(value):
     if value is None:
         return "N/a"
 
     value = str(value).strip()
-    return value if value else "N/a"
 
+    if value == "" or value.lower() in ["nan", "none", "n/a"]:
+        return "N/a"
 
-def normalize_name(name):
-    if name is None:
-        return ""
-
-    name = str(name).lower().strip()
-    name = unicodedata.normalize("NFD", name)
-    name = name.encode("ascii", "ignore").decode("utf-8")
-    name = re.sub(r"[^a-z0-9\s]", "", name)
-    name = re.sub(r"\s+", " ", name)
-    return name
-
-
-def market_value_to_number(value):
-    if value is None:
-        return None
-
-    value = str(value).strip()
-    value = value.replace("€", "").replace(",", "").replace(" ", "")
-
-    if value in ["", "-", "N/a", "N/A"]:
-        return None
-
-    multiplier = 1
-
-    if value.lower().endswith("m"):
-        multiplier = 1_000_000
-        value = value[:-1]
-    elif value.lower().endswith("k"):
-        multiplier = 1_000
-        value = value[:-1]
-
-    try:
-        return float(value) * multiplier
-    except Exception:
-        return None
+    return value

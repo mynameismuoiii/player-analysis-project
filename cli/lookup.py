@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+
 import pandas as pd
 import requests
 
@@ -21,25 +22,45 @@ def print_table(df):
     print(df.to_string(index=False))
 
 
+def call_api(endpoint, params):
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}{endpoint}",
+            params=params,
+            timeout=30,
+        )
+
+        response.raise_for_status()
+        return response.json()
+
+    except requests.exceptions.HTTPError:
+        print("API lỗi:")
+        print("Status:", response.status_code)
+        print("Response:", response.text)
+        return None
+
+    except requests.exceptions.ConnectionError:
+        print("Không kết nối được API.")
+        print("Hãy chạy server trước:")
+        print("python -m api.app")
+        return None
+
+    except requests.exceptions.Timeout:
+        print("API phản hồi quá lâu.")
+        return None
+
+
 def lookup(name=None, club=None):
     if name:
-        response = requests.get(
-            f"{API_BASE_URL}/api/player",
-            params={"name": name},
-            timeout=30,
-        )
+        result = call_api("/api/player", {"name": name})
         output_file = f"player_{safe_filename(name)}.csv"
     else:
-        response = requests.get(
-            f"{API_BASE_URL}/api/club",
-            params={"club": club},
-            timeout=30,
-        )
+        result = call_api("/api/club", {"club": club})
         output_file = f"club_{safe_filename(club)}.csv"
 
-    response.raise_for_status()
+    if result is None:
+        return
 
-    result = response.json()
     data = result.get("data", [])
 
     if not data:
@@ -68,6 +89,10 @@ def main():
 
     if not args.name and not args.club:
         print("Vui lòng nhập --name hoặc --club")
+        return
+
+    if args.name and args.club:
+        print("Chỉ nhập một trong hai: --name hoặc --club")
         return
 
     lookup(name=args.name, club=args.club)
