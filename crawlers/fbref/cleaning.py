@@ -1,82 +1,102 @@
+import re
 import pandas as pd
 
 
-ID_COLUMNS = {
-    "Rk",
-    "Player",
-    "Nation",
-    "Pos",
-    "Squad",
-    "Age",
-    "Born",
-    "Comp",
-}
+def normalize_column_name(col: str) -> str:
+    col = str(col).strip().lower()
+    col = col.replace("%", "pct")
+    col = col.replace("+", "_plus_")
+    col = col.replace("-", "_")
+    col = col.replace("/", "_per_")
+    col = re.sub(r"[^\w]+", "_", col)
+    col = re.sub(r"_+", "_", col)
+    return col.strip("_")
 
 
-def flatten_columns(df: pd.DataFrame, prefix: str) -> pd.DataFrame:
-    if not isinstance(df.columns, pd.MultiIndex):
-        return df
+def flatten_soccerdata_df(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
+    df = df.reset_index()
 
-    new_columns = []
+    new_cols = []
 
     for col in df.columns:
-        col_name = col[-1]
-
-        if col_name in ID_COLUMNS:
-            new_columns.append(col_name)
+        if isinstance(col, tuple):
+            parts = [str(c) for c in col if str(c) and "Unnamed" not in str(c)]
+            name = "_".join(parts)
         else:
-            new_columns.append(f"{prefix}_{col_name}")
+            name = str(col)
 
-    df.columns = new_columns
+        name = normalize_column_name(name)
+
+        if name not in ["player", "team", "league", "season"]:
+            name = f"{table_name}_{name}"
+
+        new_cols.append(name)
+
+    df.columns = new_cols
+    return df
+
+
+def clean_df(df: pd.DataFrame, table_name: str) -> pd.DataFrame:
+    df = flatten_soccerdata_df(df, table_name)
+
+    # Ép object để thay NaN bằng "N/a" không lỗi Int64
+    df = df.astype("object")
+
+    df = df.drop_duplicates()
+    df = df.where(pd.notnull(df), "N/a")
+    df = df.replace({"": "N/a", "nan": "N/a", "NaN": "N/a"})
 
     return df
 
 
-def remove_repeated_header_rows(df: pd.DataFrame) -> pd.DataFrame:
-    if "Rk" in df.columns:
-        df = df[df["Rk"].astype(str) != "Rk"]
+def convert_minutes_to_number(value) -> float:
+    value = str(value).replace(",", "").strip()
 
-    if "Player" in df.columns:
-        df = df[df["Player"].astype(str) != "Player"]
-
-    return df
-
-
-def clean_table(df: pd.DataFrame, prefix: str) -> pd.DataFrame:
-    df = flatten_columns(df, prefix)
-    df = remove_repeated_header_rows(df)
-
-    df = df.drop(columns=["Rk"], errors="ignore")
-    df = df.loc[:, ~df.columns.duplicated()]
-
-    df = df.fillna("N/a")
-
-    return df
+    try:
+        return float(value)
+    except Exception:
+        return 0
 
 
-def filter_minutes_over_90(df: pd.DataFrame) -> pd.DataFrame:
-    if "Min" not in df.columns:
-        raise Exception("Không tìm thấy cột Min trong bảng standard")
+def filter_players_over_90_minutes(df: pd.DataFrame) -> pd.DataFrame:
+    min_col = None
 
-    df = df.copy()
+    for col in df.columns:
+        col_lower = col.lower()
 
-    df["Min"] = (
-        df["Min"]
-        .astype(str)
-        .str.replace(",", "", regex=False)
-    )
+        if (
+            col_lower.endswith("_min")
+            or col_lower.endswith("_minutes")
+            or col_lower == "standard_playing_time_min"
+        ):
+            min_col = col
+            break
 
-    df["Min"] = pd.to_numeric(df["Min"], errors="coerce")
+    if min_col is None:
+        print("Các cột hiện có:")
+        print(df.columns.tolist())
+        raise ValueError("Không tìm thấy cột số phút thi đấu.")
 
-    df = df[df["Min"] > 90]
+    df["_minutes_number"] = df[min_col].apply(convert_minutes_to_number)
+    df = df[df["_minutes_number"] > 90].copy()
+    df = df.drop(columns=["_minutes_number"])
 
     return df
 
 
-def final_clean(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
+def make_sqlite_safe(df: pd.DataFrame) -> pd.DataFrame:
+    df.columns = [normalize_column_name(c) for c in df.columns]
 
-    df = df.fillna("N/a")
-    df = df.replace(["", "nan", "NaN", "None", None], "N/a")
+    seen = {}
+    new_cols = []
 
+    for col in df.columns:
+        if col not in seen:
+            seen[col] = 0
+            new_cols.append(col)
+        else:
+            seen[col] += 1
+            new_cols.append(f"{col}_{seen[col]}")
+
+    df.columns = new_cols
     return df
