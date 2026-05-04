@@ -437,6 +437,164 @@ data/processed/club_arsenal.csv
 ```
 
 ---
+Hiểu rồi, xin lỗi vì đã phân tích ngoài yêu cầu! Mình sẽ viết phần báo cáo README cho analysis dựa đúng trên code của bạn nhé.
+
+---
+
+# 📊 Phân tích dữ liệu (Analysis)
+
+Sau khi đã có đầy đủ dữ liệu từ FBref và FootballTransfers, chạy các script phân tích trong thư mục `analysis/`.
+
+---
+
+## Cấu trúc thư mục analysis/
+
+```txt
+analysis/
+├── kmeans_cluster.py
+├── pca_visualization.py
+├── plot_utils.py
+├── stats_summary.py
+└── valuation.py
+```
+
+---
+
+## 📈 Thống kê tổng quan — `stats_summary.py`
+
+Tính mean, median, std các chỉ số theo từng câu lạc bộ. Tìm đội bóng có hiệu suất tổng hợp tốt nhất dựa trên StandardScaler.
+
+```bash
+python -m analysis.stats_summary
+```
+
+Kết quả mong muốn:
+
+```txt
+Best team: <Tên CLB>
+```
+
+Output:
+
+```txt
+data/processed/mean_stats.csv
+data/processed/median_stats.csv
+data/processed/std_stats.csv
+```
+
+---
+
+## 💸 Định giá cầu thủ — `valuation.py`
+
+Tính điểm hiệu suất cho từng cầu thủ dựa trên các chỉ số: goals, assists, G+A, goals/90, assists/90. Dùng trọng số để tính `estimated_value`.
+
+```bash
+python -m analysis.valuation
+```
+
+Kết quả mong muốn:
+
+```txt
+Top 10 players by estimated value:
+   player    squad    estimated_value
+...
+```
+
+Output:
+
+```txt
+data/processed/valuation.csv
+```
+
+---
+
+## 🔵 Phân cụm cầu thủ — `kmeans_cluster.py`
+
+Phân nhóm cầu thủ theo chỉ số thi đấu bằng K-Means (k=4). Tự động vẽ Elbow Method để tham khảo chọn K.
+
+```bash
+python -m analysis.kmeans_cluster
+```
+
+Kết quả mong muốn:
+
+```txt
+KMeans done
+
+Cluster distribution:
+0    ...
+1    ...
+2    ...
+3    ...
+
+Sample data:
+   player    squad    cluster
+...
+```
+
+Output:
+
+```txt
+data/processed/elbow.png
+data/processed/kmeans_clusters.csv
+```
+
+Bảng SQLite: không ghi thêm — kết quả lưu CSV.
+
+---
+
+## 🗺️ Trực quan hóa PCA — `pca_visualization.py`
+
+Giảm chiều dữ liệu bằng PCA, vẽ biểu đồ phân cụm 2D và 3D. Cần chạy `kmeans_cluster.py` trước để có file `kmeans_clusters.csv`.
+
+```bash
+python -m analysis.pca_visualization
+```
+
+Kết quả mong muốn:
+
+```txt
+PCA done
+
+Explained variance ratio (2D):
+[...  ...]
+
+Sample PCA data:
+   player    cluster    PC1    PC2
+...
+```
+
+Output:
+
+```txt
+data/processed/pca_2d.png
+data/processed/pca_3d.png
+```
+
+---
+
+## 🎨 Tiện ích vẽ biểu đồ — `plot_utils.py`
+
+Module dùng chung, cung cấp hàm `save_plot()` để vẽ line chart thống nhất. Không chạy trực tiếp — được import bởi các script khác.
+
+---
+
+## 🔄 Chạy toàn bộ analysis
+
+```bash
+python -m analysis.stats_summary
+python -m analysis.valuation
+python -m analysis.kmeans_cluster
+python -m analysis.pca_visualization
+```
+
+---
+
+## 📌 Ghi chú
+
+- Cần chạy FBref crawler và FootballTransfers crawler trước khi chạy analysis.
+- `pca_visualization.py` phụ thuộc vào output của `kmeans_cluster.py`.
+- Các thư viện bổ sung cần thêm vào `requirements.txt`: `scikit-learn`, `matplotlib`.
 
 # 🔄 Chạy lại project từ đầu
 
