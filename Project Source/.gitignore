@@ -1,43 +1,68 @@
-# Python cache
+# ==============================
+# Python
+# ==============================
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environment
-.venv/
+# ==============================
+# Virtual Environment
+# ==============================
 venv/
+.venv/
 env/
 
-# IDE
+# ==============================
+# IDE / Editor
+# ==============================
 .vscode/
 .idea/
 
-# OS files
+# ==============================
+# OS Files
+# ==============================
 .DS_Store
 Thumbs.db
 
-# SQLite database
+# ==============================
+# Database
+# ==============================
 *.db
 *.sqlite
 *.sqlite3
-data/player_analysis.db
 
-# Raw / processed data
+# ==============================
+# Project Data
+# ==============================
+# Raw HTML (FBref)
 data/raw/*.html
+
+# Processed data (CSV)
 data/processed/*.csv
 
+# Main database file
+data/player_analysis.db
+
+# ==============================
 # Logs
+# ==============================
 *.log
 logs/
 
-# Selenium / webdriver cache
+# ==============================
+# Selenium / Webdriver
+# ==============================
 .wdm/
 .seleniumbase/
 downloaded_files/
 
-# Jupyter
+# ==============================
+# Jupyter Notebook
+# ==============================
 .ipynb_checkpoints/
 
-# Environment variables
+# ==============================
+# Environment Variables
+# ==============================
 .env
 .env.*
