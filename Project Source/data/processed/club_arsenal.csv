@@ -1,0 +1,23 @@
+﻿age,born,market_value,matches,nation,per_90_minutes_ast,per_90_minutes_g_pk,per_90_minutes_gls,per_90_minutes_gplusa,per_90_minutes_gplusa_pk,performance_ast,performance_crdr,performance_crdy,performance_g_pk,performance_gls,performance_gplusa,performance_pk,performance_pkatt,player,playing_time_90s,playing_time_min,playing_time_mp,playing_time_starts,pos,rk,squad
+26,1997,€40.6M,Matches,eng ENG,0.15,0.00,0.00,0.15,0.15,2,0,2,0,0,2,0,0,Ben White,13.3,1198,17,13,DF,554,Arsenal
+22,2001,€98.5M,Matches,eng ENG,0.52,0.26,0.31,0.83,0.78,10,0,3,5,6,16,1,1,Bukayo Saka,19.2,1729,25,20,"FW,MF",447,Arsenal
+28,1995,€26.3M,Matches,es ESP,0.00,0.00,0.00,0.00,0.00,0,0,3,0,0,0,0,0,David Raya,38.0,3420,38,38,GK,428,Arsenal
+25,1999,€104.4M,Matches,eng ENG,0.22,0.13,0.13,0.35,0.35,7,1,7,4,4,11,0,0,Declan Rice,31.4,2825,35,33,MF,434,Arsenal
+17,2007,€48.8M,Matches,eng ENG,0.20,0.40,0.40,0.60,0.60,2,0,1,4,4,6,0,0,Ethan Nwaneri,9.9,895,26,11,"FW,MF",387,Arsenal
+27,1997,€21.9M,Matches,br BRA,0.00,0.44,0.44,0.44,0.44,0,0,4,3,3,3,0,0,Gabriel Jesus,6.8,608,17,6,FW,260,Arsenal
+26,1997,€75.6M,Matches,br BRA,0.04,0.11,0.11,0.15,0.15,1,0,4,3,3,4,0,0,Gabriel Magalhães,26.3,2363,28,28,DF,321,Arsenal
+23,2001,€51.3M,Matches,br BRA,0.16,0.31,0.31,0.47,0.47,4,0,1,8,8,12,0,0,Gabriel Martinelli,25.4,2290,33,25,"FW,MF",332,Arsenal
+24,2000,€25.4M,Matches,pl POL,0.00,0.08,0.08,0.08,0.08,0,0,1,1,1,1,0,0,Jakub Kiwior,12.5,1122,17,10,DF,288,Arsenal
+32,1991,€4.2M,Matches,it ITA,0.00,0.00,0.00,0.00,0.00,0,0,5,0,0,0,0,0,Jorginho,7.8,704,15,9,MF,269,Arsenal
+23,2001,€65.3M,Matches,nl NED,0.11,0.04,0.04,0.15,0.15,3,0,7,1,1,4,0,0,Jurriën Timber,26.9,2417,30,27,DF,511,Arsenal
+25,1999,€59.9M,Matches,de GER,0.14,0.43,0.43,0.58,0.58,3,0,5,9,9,12,0,0,Kai Havertz,20.8,1875,23,21,FW,230,Arsenal
+27,1997,€5.1M,Matches,sct SCO,0.00,0.35,0.35,0.35,0.35,0,0,0,1,1,1,0,0,Kieran Tierney,2.9,259,13,2,DF,510,Arsenal
+29,1994,€19.9M,Matches,be BEL,0.25,0.28,0.28,0.53,0.53,7,1,4,8,8,15,0,0,Leandro Trossard,28.3,2546,38,28,FW,523,Arsenal
+25,1998,€71.7M,Matches,no NOR,0.31,0.08,0.12,0.43,0.39,8,0,4,2,3,11,1,1,Martin Ødegaard,25.8,2325,30,26,MF,574,Arsenal
+28,1996,€40.4M,Matches,es ESP,0.11,0.40,0.40,0.51,0.51,2,1,4,7,7,9,0,0,Mikel Merino,17.6,1586,28,17,"MF,FW",349,Arsenal
+17,2006,€56.6M,Matches,eng ENG,0.00,0.07,0.07,0.07,0.07,0,2,3,1,1,1,0,0,Myles Lewis-Skelly,15.2,1369,23,15,DF,307,Arsenal
+27,1996,€11.1M,Matches,ua UKR,0.17,0.00,0.00,0.17,0.17,1,0,1,0,0,1,0,0,Oleksandr Zinchenko,5.9,527,15,5,"DF,MF",572,Arsenal
+29,1994,€4.3M,Matches,eng ENG,0.36,0.00,0.00,0.36,0.36,2,0,1,0,0,2,0,0,Raheem Sterling,5.5,499,17,7,"FW,MF",490,Arsenal
+22,2002,€51.3M,Matches,it ITA,0.09,0.18,0.18,0.27,0.27,1,0,4,2,2,3,0,0,Riccardo Calafiori,10.9,983,19,11,DF,83,Arsenal
+31,1993,€4.1M,Matches,gh GHA,0.06,0.13,0.13,0.19,0.19,2,0,4,4,4,6,0,0,Thomas Partey,31.1,2797,35,31,"MF,DF",410,Arsenal
+23,2001,€97.8M,Matches,fr FRA,0.00,0.06,0.06,0.06,0.06,0,1,2,2,2,2,0,0,William Saliba,33.8,3039,35,35,DF,449,Arsenal
